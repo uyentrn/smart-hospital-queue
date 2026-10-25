@@ -1,0 +1,10 @@
+{
+  "description": "Streamlines real-time queue management and medical history tracking for patients in smart hospitals with accessible, user-friendly mobile interface.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
