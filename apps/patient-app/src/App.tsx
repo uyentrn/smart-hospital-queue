@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BatteryFull, ClipboardList, House, Signal, UserRound, Wifi } from 'lucide-react'
+import { BatteryFull, CalendarPlus, ClipboardList, House, Signal, UserRound, Wifi } from 'lucide-react'
 import {
   INITIAL_APPOINTMENTS,
   INITIAL_QUEUES,
@@ -20,8 +20,9 @@ import Home from './screens/Home'
 import History from './screens/History'
 import HistoryDetail from './screens/HistoryDetail'
 import Profile from './screens/Profile'
+import Booking, { type BookingPayload } from './screens/Booking'
 
-type Tab = 'home' | 'history' | 'profile'
+type Tab = 'home' | 'booking' | 'history' | 'profile'
 
 const TICK_MS = 10000
 /** Paused queues resume after this many ticks in the demo. */
@@ -36,6 +37,7 @@ const DEPT_ROOM: Record<string, string> = {
 
 const TABS: { id: Tab; label: string; Icon: typeof House }[] = [
   { id: 'home', label: 'Trang chủ', Icon: House },
+  { id: 'booking', label: 'Đặt lịch', Icon: CalendarPlus },
   { id: 'history', label: 'Lịch sử', Icon: ClipboardList },
   { id: 'profile', label: 'Hồ sơ', Icon: UserRound },
 ]
@@ -121,8 +123,8 @@ export default function App() {
     if (q) setToast(`Đã hủy lượt khám ${ticketLabel(q.prefix, q.ticketNo)} cho ${person.name}`)
   }
 
-  const cancelAppt = (id: string) => {
-    setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'cancelled' } : a)))
+  const cancelAppt = (id: string, reason = 'Người dùng tự hủy do bận') => {
+    setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'cancelled', cancelReason: reason } : a)))
     setToast(`Đã hủy lịch khám cho ${person.name}`)
   }
 
@@ -199,7 +201,7 @@ export default function App() {
       >
         <StatusBar />
 
-        <main ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <main ref={scroller} className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {!authed ? (
             <Login onLogin={() => setAuthed(true)} />
           ) : tab === 'home' ? (
@@ -215,12 +217,38 @@ export default function App() {
               onCancelAppt={cancelAppt}
               onReschedule={reschedule}
               onToast={setToast}
+              onOpenBooking={() => setTab('booking')}
+            />
+          ) : tab === 'booking' ? (
+            <Booking
+              person={person}
+              onCreateAppointment={(payload: BookingPayload) => {
+                setAppointments((prev) => [
+                  {
+                    id: `ap${Date.now()}`,
+                    personId: viewId,
+                    doctorId: payload.doctorId,
+                    department: payload.department,
+                    slot: payload.slot,
+                    room: payload.room,
+                    status: 'upcoming',
+                  },
+                  ...prev,
+                ])
+                setToast(`Đã đặt lịch khám cho ${person.name}`)
+              }}
+              onGoHome={() => setTab('home')}
             />
           ) : tab === 'history' ? (
             detail ? (
               <HistoryDetail visitId={detail} onBack={() => setDetail(null)} />
             ) : (
-              <History person={person} onOpen={setDetail} onBook={book} />
+              <History 
+                person={person} 
+                appointments={appointments.filter((a) => a.personId === viewId)} // THÊM DÒNG NÀY
+                onOpen={setDetail} 
+                onBook={book} 
+              />
             )
           ) : (
             <Profile
@@ -241,7 +269,7 @@ export default function App() {
             aria-label="Điều hướng chính"
             className="shrink-0 border-t border-line/70 bg-white px-3 pt-1.5 pb-[max(env(safe-area-inset-bottom),10px)] sm:pb-5"
           >
-            <ul className="grid grid-cols-3">
+            <ul className="grid grid-cols-4">
               {TABS.map(({ id, label, Icon }) => {
                 const active = tab === id
                 return (
@@ -263,9 +291,9 @@ export default function App() {
                       >
                         <Icon size={24} strokeWidth={active ? 2.5 : 2} aria-hidden="true" />
                       </span>
-                      <span className={cx('text-base', active ? 'font-bold text-brand-900' : 'font-medium text-ink-2')}>
+                      <span className={cx('text-[13px] sm:text-sm whitespace-nowrap', active ? 'font-bold text-brand-900' : 'font-medium text-ink-2')}>
                         {label}
-                      </span>
+                      </span> 
                     </button>
                   </li>
                 )

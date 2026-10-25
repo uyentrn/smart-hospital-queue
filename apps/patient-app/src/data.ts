@@ -32,7 +32,7 @@ export type Person = {
   theme: ThemeKey
 }
 
-export type ThemeKey = 'blue' | 'red' | 'yellow' | 'green' | 'purple'
+export type ThemeKey = 'blue' | 'red' | 'yellow' | 'green' | 'purple' | 'pink'
 
 export type Theme = { key: ThemeKey; label: string; c50: string; c100: string; c200: string; ink: string; solid: string }
 
@@ -43,9 +43,11 @@ export const THEMES: Record<ThemeKey, Theme> = {
   yellow: { key: 'yellow', label: 'Vàng', c50: '#fff9e6', c100: '#ffedb3', c200: '#f9d97a', ink: '#5c3d00', solid: '#6e4a00' },
   green: { key: 'green', label: 'Xanh lá', c50: '#edf9f0', c100: '#d3f1dc', c200: '#a9e2ba', ink: '#0f4425', solid: '#17603a' },
   purple: { key: 'purple', label: 'Tím', c50: '#f5f1ff', c100: '#e6dcff', c200: '#cdbbf7', ink: '#3b1d74', solid: '#5b34a6' },
+  pink: { key: 'pink', label: 'Hồng', c50: '#fdf2f8', c100: '#fce7f3', c200: '#fbcfe8', ink: '#831843', solid: '#be185d' },
 }
 
-export const THEME_ORDER: ThemeKey[] = ['blue', 'red', 'yellow', 'green', 'purple']
+
+export const THEME_ORDER: ThemeKey[] = ['blue', 'red', 'yellow', 'green', 'purple', 'pink']
 
 export function themeVars(t: Theme) {
   return {
@@ -428,6 +430,7 @@ export type Appointment = {
   slot: string
   room: string
   status: 'upcoming' | 'cancelled'
+  cancelReason?: string
 }
 
 export const INITIAL_APPOINTMENTS: Appointment[] = [
@@ -439,6 +442,7 @@ export const INITIAL_APPOINTMENTS: Appointment[] = [
     slot: 'Thứ Sáu, 24/10 · 14:00',
     room: 'Phòng 305 · Tầng 3',
     status: 'upcoming',
+    cancelReason: 'Hệ thống hủy do người dùng bỏ lượt',
   },
   {
     id: 'ap2',

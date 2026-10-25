@@ -73,7 +73,7 @@ export default function Profile({
 
       {/* Digital ID card — tinted with the profile's pastel tone */}
       <div className="px-5 pt-2">
-        <div className="relative aspect-[1.586] min-h-[224px] w-full overflow-hidden rounded-[24px] border-2 border-(--t-200) bg-[linear-gradient(135deg,var(--t-50)_0%,var(--t-100)_50%,var(--t-200)_100%)] p-4 text-(--t-ink) shadow-[0_24px_40px_-24px_rgba(15,30,38,0.55)]">
+        <div className="relative w-full overflow-hidden rounded-[24px] border-2 border-(--t-200) bg-[linear-gradient(135deg,var(--t-50)_0%,var(--t-100)_50%,var(--t-200)_100%)] p-4 text-(--t-ink) shadow-[0_24px_40px_-24px_rgba(15,30,38,0.55)]">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -right-16 -bottom-24 size-60 rounded-full border-[28px] border-white/40"
@@ -83,21 +83,24 @@ export default function Profile({
             className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(115deg,rgba(255,255,255,0.22)_0_2px,transparent_2px_14px)]"
           />
 
-          <div className="relative flex h-full flex-col">
+          <div className="relative flex h-full flex-col gap-5">
             <div className="flex items-center gap-2">
               <HospitalMark size={30} className="rounded-lg" />
-              <p className="text-base font-bold">BV Thông Minh</p>
-              <span className="ml-auto rounded-md border-2 border-current/40 bg-white/60 px-2 py-0.5 text-base font-semibold tracking-wide">
+              <p className="text-base font-bold whitespace-nowrap">BV An Tâm</p>
+              <span className="whitespace-nowrap ml-auto rounded-md border-2 border-current/40 bg-white/60 px-2 py-0.5 text-base font-semibold tracking-wide">
                 THẺ BỆNH NHÂN
               </span>
             </div>
 
-            <div className="mt-auto flex items-end gap-3">
+            <div className="flex items-center gap-5">
+              <Avatar name={person.name} theme={t} size={56} className="ring-[3px] ring-white" />
+              <p className="mt-2 truncate text-xl leading-tight font-bold">{person.name}</p>
+            </div>
+
+            <div className="mt-auto flex gap-0">
               <div className="min-w-0 flex-1">
-                <Avatar name={person.name} theme={t} size={56} className="ring-[3px] ring-white" />
-                <p className="mt-2 truncate text-xl leading-tight font-bold">{person.name}</p>
-                <p className="mt-1 text-base">Mã bệnh nhân (MRN)</p>
-                <p className="tabular text-lg leading-tight font-extrabold tracking-wider">{person.mrn}</p>
+                <p className="mt-1 text-base font-bold">Mã bệnh nhân:</p>
+                <p className="tabular text-lg leading-tight tracking-wider">{person.mrn}</p>
               </div>
               <button
                 type="button"

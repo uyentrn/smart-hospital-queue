@@ -1,34 +1,42 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  BellRing,
-  CalendarClock,
-  CalendarPlus,
-  CalendarX2,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  CircleCheck,
-  Clock3,
-  History,
-  Inbox,
-  MapPin,
-  PauseCircle,
-  Users,
-  X,
-} from 'lucide-react'
-import {
-  DOCTORS,
-  MINUTES_PER_PERSON,
-  SLOTS,
-  THEMES,
-  queueStatus,
-  themeVars,
-  ticketLabel,
-  type Appointment,
-  type Person,
-  type Queue,
-} from '../data'
+import { ArrowLeft, BellRing, CalendarClock, CalendarPlus, CalendarX2, Check, ChevronDown, ChevronRight, CircleCheck, Clock3, History, Inbox, MapPin, PauseCircle, Users, X, } from 'lucide-react'
+import { DOCTORS, MINUTES_PER_PERSON, SLOTS, THEMES, queueStatus, themeVars, ticketLabel,
+  type Appointment, type Person, type Queue, } from '../data'
 import { Avatar, BottomSheet, Button, ConfirmDialog, StatusPill, cx } from '../ui'
+
+
+// THÊM dữ liệu cấu trúc Ngày -> Ca khám -> Khung giờ 1 tiếng (đặt phía trên component Home)
+const AVAILABLE_SCHEDULE = [
+  {
+    id: '2026-10-26',
+    dow: 'Thứ Hai',
+    date: '26/10',
+    daysAway: 1,
+    sessions: [
+      { id: 'morning', label: 'Ca Sáng', sub: '07:00 - 11:30', slots: ['07:00 - 08:00', '08:00 - 09:00', '09:00 - 10:00'] },
+      { id: 'afternoon', label: 'Ca Chiều', sub: '13:00 - 16:30', slots: ['13:00 - 14:00', '15:00 - 16:00'] },
+    ],
+  },
+  {
+    id: '2026-10-27',
+    dow: 'Thứ Ba',
+    date: '27/10',
+    daysAway: 2,
+    sessions: [
+      { id: 'morning', label: 'Ca Sáng', sub: '07:00 - 11:30', slots: ['08:00 - 09:00', '10:00 - 11:00'] },
+      { id: 'afternoon', label: 'Ca Chiều', sub: '13:00 - 16:30', slots: ['13:00 - 14:00', '14:00 - 15:00', '15:00 - 16:00'] },
+    ],
+  },
+  {
+    id: '2026-10-29',
+    dow: 'Thứ Năm',
+    date: '29/10',
+    daysAway: 4,
+    sessions: [
+      { id: 'morning', label: 'Ca Sáng', sub: '07:00 - 11:30', slots: ['07:00 - 08:00', '09:00 - 10:00', '10:00 - 11:00'] },
+    ],
+  },
+]
 
 function greeting() {
   const h = new Date().getHours()
@@ -56,7 +64,8 @@ function QueueCard({
   const paused = status === 'paused'
   const ewt = q.ahead * MINUTES_PER_PERSON
   const sub = called ? 'text-on-dark-2' : 'text-(--t-ink)'
-
+  // const sub = 'text-white/90'
+  
   return (
     <article
       aria-label={`Hàng đợi ${q.service}, số ${ticketLabel(q.prefix, q.ticketNo)}`}
@@ -147,26 +156,31 @@ function QueueCard({
           onClick={onPostpone}
           disabled={q.postponed}
           className={cx(
-            'flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 text-lg font-semibold transition active:scale-[0.98]',
+            'flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 text-lg font-semibold transition active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed',
             called
-              ? 'border-white/70 text-white hover:bg-white/10 disabled:border-white/30'
-              : 'border-(--t-ink) bg-white/50 text-(--t-ink) hover:bg-white disabled:border-(--t-200) disabled:bg-white/40',
+              ? 'border-white bg-white text-ok-deep hover:bg-surface' // Thẻ đang xanh đậm -> Nút trắng, chữ xanh
+              : 'border-ok bg-ok text-white hover:bg-ok-deep'         // Thẻ đang nhạt -> Nút xanh, chữ trắng
           )}
         >
           {q.postponed ? (
             <>
-              <Check size={22} aria-hidden="true" /> Đã lùi lượt 10 phút
+              <Check size={22} aria-hidden="true" /> Đã lùi lượt 30 phút
             </>
           ) : (
             <>
-              <History size={22} aria-hidden="true" /> Xin lùi lượt (10 phút)
+              <History size={22} aria-hidden="true" /> Xin lùi lượt (30 phút)
             </>
           )}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white text-base font-semibold text-bad transition hover:bg-bad-bg active:scale-[0.98]"
+          className={cx(
+            'flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 text-base font-semibold transition active:scale-[0.98]',
+            called
+              ? 'border-white bg-white text-bad hover:bg-bad-bg'  // Thẻ đang xanh đậm -> Nút trắng, chữ đỏ
+              : 'border-bad bg-bad text-white hover:bg-[#7f1616]' // Thẻ đang nhạt -> Nút đỏ, chữ trắng
+          )}
         >
           <X size={20} strokeWidth={2.6} aria-hidden="true" /> Hủy lượt khám
         </button>
@@ -198,14 +212,14 @@ function AppointmentCard({
         <div className={cx('flex items-center gap-2.5', cancelled ? 'text-ink-2' : 'text-(--t-ink)')}>
           <CalendarClock size={24} aria-hidden="true" />
           <div className={cx('leading-tight', cancelled && 'line-through')}>
-            <p className="text-base font-semibold">{day}</p>
-            <p className="tabular text-[22px] font-extrabold">{time}</p>
+            <p className="text-base font-semibold whitespace-nowrap">{day}</p>
+            <p className="tabular text-[22px] font-extrabold whitespace-nowrap">{time}</p>
           </div>
         </div>
         {cancelled ? (
           <StatusPill status="cancelled" />
         ) : (
-          <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border-2 border-current/40 bg-ok-bg px-3 text-base font-semibold text-ok-ink">
+          <span className="whitespace-nowrap inline-flex min-h-9 items-center gap-1.5 rounded-full border-2 border-current/40 bg-ok-bg px-3 text-base font-semibold text-ok-ink">
             <CircleCheck size={18} strokeWidth={2.4} aria-hidden="true" /> Đã xác nhận
           </span>
         )}
@@ -257,6 +271,7 @@ export default function Home({
   onCancelAppt,
   onReschedule,
   onToast,
+  onOpenBooking,
 }: {
   account: Person
   person: Person
@@ -269,14 +284,21 @@ export default function Home({
   onCancelAppt: (apptId: string) => void
   onReschedule: (apptId: string, slot: string) => void
   onToast: (m: string) => void
+  onOpenBooking: () => void
 }) {
   const [active, setActive] = useState(0)
   const [sheet, setSheet] = useState<null | 'queues' | 'people' | 'resched'>(null)
   const [confirm, setConfirm] = useState<Confirm | null>(null)
-  const [reschedId, setReschedId] = useState<string | null>(null)
-  const [newSlot, setNewSlot] = useState<string | null>(null)
+  const [confirmSwitch, setConfirmSwitch] = useState<Person | null>(null)
   const track = useRef<HTMLDivElement>(null)
+  const [reschedId, setReschedId] = useState<string | null>(null)
+  const [reschedStep, setReschedStep] = useState<1 | 2 | 3>(1)
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null)
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const [newSlot, setNewSlot] = useState<string | null>(null)
 
+  const selectedDayObj = AVAILABLE_SCHEDULE.find((d) => d.id === selectedDayId)
+  const selectedSessionObj = selectedDayObj?.sessions.find((s) => s.id === selectedSessionId)
   useEffect(() => {
     setActive(0)
     track.current?.scrollTo({ left: 0 })
@@ -307,7 +329,17 @@ export default function Home({
     setConfirm(null)
   }
 
-  const upcoming = appointments.filter((a) => a.status === 'upcoming').length
+  // const upcoming = appointments.filter((a) => a.status === 'upcoming').length
+  const upcoming = appointments.filter((a) => {
+    if (a.status !== 'upcoming') return false
+    const match = a.slot.match(/(\d{1,2})\/(\d{1,2})/)
+    if (match) {
+      const day = parseInt(match[1], 10)
+      const month = parseInt(match[2], 10)
+      if (month < 10 || (month === 10 && day <= 25)) return false // Ẩn các lịch <= 25/10
+    }
+    return true
+  })
 
   return (
     <div className="pb-6">
@@ -349,11 +381,12 @@ export default function Home({
             <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-white text-(--t-ink)">
               <Inbox size={32} aria-hidden="true" />
             </span>
-            <h2 className="mt-4 text-xl font-bold text-ink">Chưa có hàng đợi nào</h2>
+            <h2 className="mt-4">Chưa có hàng đợi nào</h2>
             <p className="mt-2 text-base text-ink-2">
               {person.name} hiện không có lượt khám nào hôm nay. Lấy số tại ki-ốt hoặc đặt lịch trước.
             </p>
-            <Button className="mt-6" onClick={() => onToast('Đã mở đặt lịch khám (bản demo)')}>
+            <Button className="mt-6 border border-(--t-ink) !bg-(--t-100) !text-(--t-ink) hover:!bg-(--t-solid) hover:!text-white !shadow-none transition-colors" 
+              onClick={onOpenBooking}>
               <CalendarPlus size={22} aria-hidden="true" /> Đặt lịch khám
             </Button>
           </div>
@@ -410,16 +443,6 @@ export default function Home({
                 ))}
               </div>
             )}
-
-            <div className="mx-5 mt-3 flex gap-3.5 rounded-2xl bg-surface p-4">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white text-brand-800">
-                <BellRing size={22} aria-hidden="true" />
-              </span>
-              <p className="text-base text-ink-2">
-                <strong className="font-semibold text-ink">Bạn không cần ngồi canh màn hình.</strong> Điện thoại sẽ rung
-                và báo khi còn 2 người phía trước.
-              </p>
-            </div>
           </>
         )}
       </section>
@@ -429,20 +452,23 @@ export default function Home({
           <h2 id="appt-title" className="px-1 text-lg font-bold text-ink">
             Lịch hẹn sắp tới
           </h2>
-          <p className="text-base text-ink-2">{upcoming} lịch hẹn</p>
+          <p className="text-base text-ink-2">{upcoming.length} lịch hẹn</p>
         </div>
-        {appointments.length === 0 ? (
+        {upcoming.length === 0 ? (
           <p className="rounded-3xl bg-surface px-5 py-6 text-center text-base text-ink-2">
             Chưa có lịch hẹn nào. Bạn có thể đặt lại bác sĩ từ tab Lịch sử.
           </p>
         ) : (
           <ul className="flex flex-col gap-3">
-            {appointments.map((a) => (
+            {upcoming.map((a) => (
               <li key={a.id}>
                 <AppointmentCard
                   a={a}
                   onReschedule={() => {
                     setReschedId(a.id)
+                    setReschedStep(1)
+                    setSelectedDayId(null)
+                    setSelectedSessionId(null)
                     setNewSlot(null)
                     setSheet('resched')
                   }}
@@ -455,59 +481,203 @@ export default function Home({
       </section>
 
       {/* All queues */}
+      {/* Reschedule: 3-step wizard (Step 1: Ngày -> Step 2: Ca khám -> Step 3: Khung giờ 1 tiếng) */}
       <BottomSheet
-        open={sheet === 'queues'}
+        open={sheet === 'resched' && !!reschedAppt}
         onClose={() => setSheet(null)}
-        title={`Đang chờ: ${queues.length} hàng đợi`}
-        description="Chạm vào một hàng đợi để xem chi tiết"
+        title={
+          reschedStep === 1
+            ? 'Chọn ngày khám mới'
+            : reschedStep === 2
+              ? 'Chọn ca khám'
+              : 'Chọn khung giờ khám'
+        }
+        description={
+          reschedStep === 1
+            ? `Bước 1/3 • Lịch hiện tại: ${reschedAppt?.slot}`
+            : reschedStep === 2
+              ? `Bước 2/3 • ${selectedDayObj?.dow}, ${selectedDayObj?.date} (${selectedDayObj?.daysAway} ngày sau)`
+              : `Bước 3/3 • ${selectedSessionObj?.label} (${selectedDayObj?.dow}, ${selectedDayObj?.date})`
+        }
+        footer={
+          reschedStep === 1 ? (
+            <Button
+              disabled={!selectedDayId}
+              onClick={() => setReschedStep(2)}
+            >
+              Tiếp tục chọn ca khám
+            </Button>
+          ) : reschedStep === 2 ? (
+            <div className="flex flex-col gap-3">
+              <Button
+                disabled={!selectedSessionId}
+                onClick={() => setReschedStep(3)}
+              >
+                Tiếp tục chọn khung giờ
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setReschedStep(1)
+                  setSelectedSessionId(null)
+                }}
+              >
+                <ArrowLeft size={20} aria-hidden="true" /> Chọn lại ngày khám
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <Button
+                disabled={!newSlot}
+                onClick={() => {
+                  if (!reschedAppt || !selectedDayObj || !newSlot) return
+                  const finalSlot = `${selectedDayObj.dow}, ${selectedDayObj.date} • ${newSlot}`
+                  setSheet(null)
+                  setConfirm({ kind: 'resched', apptId: reschedAppt.id, slot: finalSlot })
+                }}
+              >
+                Tiếp tục xác nhận
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setReschedStep(2)
+                  setNewSlot(null)
+                }}
+              >
+                <ArrowLeft size={20} aria-hidden="true" /> Chọn lại ca khám
+              </Button>
+            </div>
+          )
+        }
       >
-        <ul className="flex flex-col gap-3">
-          {queues.map((q, i) => {
-            const s = queueStatus(q)
-            return (
-              <li key={q.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSheet(null)
-                    goTo(i)
-                  }}
-                  className={cx(
-                    'flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition hover:border-(--t-ink)',
-                    i === active ? 'border-(--t-solid) bg-(--t-50)' : 'border-line bg-white',
-                  )}
-                >
-                  <div className="w-[104px] shrink-0">
-                    <p className="tabular text-[32px] leading-none font-extrabold text-(--t-ink)">
-                      {ticketLabel(q.prefix, q.ticketNo)}
-                    </p>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-lg leading-snug font-bold text-ink">{q.service}</p>
-                    <p className="text-base text-ink-2">
-                      {q.room} · {q.floor}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <StatusPill status={s} />
-                      <span className="text-base font-semibold text-ink">
-                        {s === 'called'
-                          ? 'Ngay bây giờ'
-                          : s === 'paused'
-                            ? 'Chưa xác định'
-                            : `~ ${q.ahead * MINUTES_PER_PERSON} phút`}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight size={24} className="shrink-0 text-ink-2" aria-hidden="true" />
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-        <p className="mt-4 flex items-start gap-2 text-base text-ink-2">
-          <PauseCircle size={20} className="mt-0.5 shrink-0" aria-hidden="true" />
-          Hàng đợi “Tạm dừng” sẽ tự tiếp tục, bạn vẫn giữ nguyên số thứ tự.
-        </p>
+        {/* Thanh tiến trình 3 bước giống form Thêm người thân */}
+        <div className="mb-5 grid grid-cols-3 gap-2" aria-hidden="true">
+          <span className="h-2 rounded-full bg-brand-700" />
+          <span className={cx('h-2 rounded-full transition-colors', reschedStep >= 2 ? 'bg-brand-700' : 'bg-line')} />
+          <span className={cx('h-2 rounded-full transition-colors', reschedStep >= 3 ? 'bg-brand-700' : 'bg-line')} />
+        </div>
+
+        {/* BƯỚC 1: CHỌN NGÀY KHÁM */}
+        {reschedStep === 1 && (
+          <div>
+            <p className="mb-3 text-base font-semibold text-ink-2">
+              Chỉ hiển thị các ngày sau hôm nay còn lịch trống:
+            </p>
+            <ul className="flex flex-col gap-2.5" role="radiogroup" aria-label="Ngày khám trống">
+              {AVAILABLE_SCHEDULE.map((d) => {
+                const selected = selectedDayId === d.id
+                return (
+                  <li key={d.id}>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => {
+                        setSelectedDayId(d.id)
+                        setSelectedSessionId(null)
+                        setNewSlot(null)
+                      }}
+                      className={cx(
+                        'flex min-h-16 w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left transition',
+                        selected ? 'border-brand-700 bg-brand-50 text-brand-900' : 'border-line bg-white text-ink hover:border-brand-700',
+                      )}
+                    >
+                      <div>
+                        <p className="text-lg font-bold">
+                          {d.dow}, {d.date}
+                        </p>
+                        <p className="text-sm font-medium text-ink-2">
+                          Còn {d.sessions.reduce((acc, s) => acc + s.slots.length, 0)} khung giờ trống
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-brand-100 px-3 py-1 text-sm font-bold text-brand-900">
+                          {d.daysAway} ngày sau
+                        </span>
+                        {selected && <Check size={22} strokeWidth={2.8} className="text-brand-800" aria-hidden="true" />}
+                      </div>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+
+        {/* BƯỚC 2: CHỌN CA KHÁM LỚN (SÁNG / CHIỀU) */}
+        {reschedStep === 2 && selectedDayObj && (
+          <div>
+            <p className="mb-3 text-base font-semibold text-ink-2">
+              Chọn ca khám trong ngày {selectedDayObj.dow} ({selectedDayObj.date}):
+            </p>
+            <ul className="flex flex-col gap-3" role="radiogroup" aria-label="Ca khám">
+              {selectedDayObj.sessions.map((ses) => {
+                const selected = selectedSessionId === ses.id
+                return (
+                  <li key={ses.id}>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => {
+                        setSelectedSessionId(ses.id)
+                        setNewSlot(null)
+                      }}
+                      className={cx(
+                        'flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left transition',
+                        selected ? 'border-brand-700 bg-brand-50 text-brand-900' : 'border-line bg-white text-ink hover:border-brand-700',
+                      )}
+                    >
+                      <div>
+                        <p className="text-lg font-bold">{ses.label}</p>
+                        <p className="tabular text-base text-ink-2">
+                          Khung giờ: {ses.sub} • Còn {ses.slots.length} ô trống
+                        </p>
+                      </div>
+                      {selected && <Check size={24} strokeWidth={2.8} className="text-brand-800" aria-hidden="true" />}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+
+        {/* BƯỚC 3: CHỌN KHUNG GIỜ NHỎ (1 TIẾNG) */}
+        {reschedStep === 3 && selectedSessionObj && (
+          <div>
+            <p className="mb-3 text-base font-semibold text-ink-2">
+              Chọn khung giờ khám (kéo dài 1 tiếng):
+            </p>
+            <ul className="grid grid-cols-1 gap-2.5" role="radiogroup" aria-label="Khung giờ chi tiết">
+              {selectedSessionObj.slots.map((slotTime) => {
+                const selected = newSlot === slotTime
+                return (
+                  <li key={slotTime}>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setNewSlot(slotTime)}
+                      className={cx(
+                        'flex min-h-14 w-full items-center gap-3 rounded-2xl border-2 px-4 text-left text-lg font-semibold transition',
+                        selected ? 'border-brand-700 bg-brand-50 text-brand-900' : 'border-line bg-white text-ink hover:border-brand-700',
+                      )}
+                    >
+                      <Clock3 size={22} aria-hidden="true" />
+                      <span className="tabular flex-1">{slotTime}</span>
+                      <span className="text-sm font-medium text-ok-ink">Còn trống</span>
+                      {selected && <Check size={24} strokeWidth={2.8} aria-hidden="true" />}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
       </BottomSheet>
 
       {/* Family profile switcher */}
@@ -528,7 +698,8 @@ export default function Home({
                   role="radio"
                   aria-checked={selected}
                   onClick={() => {
-                    onSwitchPerson(p.id)
+                    if (p.id !== person.id) setConfirmSwitch(p)
+                    // onSwitchPerson(p.id)
                     setSheet(null)
                   }}
                   className={cx(
@@ -562,49 +733,30 @@ export default function Home({
         </p>
       </BottomSheet>
 
-      {/* Reschedule: pick a new slot, then confirm */}
-      <BottomSheet
-        open={sheet === 'resched' && !!reschedAppt}
-        onClose={() => setSheet(null)}
-        title="Dời lịch khám"
-        description={reschedAppt ? `Lịch hiện tại: ${reschedAppt.slot}` : undefined}
-        footer={
-          <Button
-            disabled={!newSlot}
-            onClick={() => {
-              if (!reschedAppt || !newSlot) return
-              setSheet(null)
-              setConfirm({ kind: 'resched', apptId: reschedAppt.id, slot: newSlot })
-            }}
-          >
-            Tiếp tục
-          </Button>
-        }
-      >
-        <p className="mb-3 text-base font-semibold text-ink-2">Chọn giờ khám mới</p>
-        <ul className="flex flex-col gap-2" role="radiogroup" aria-label="Giờ khám mới">
-          {SLOTS.filter((s) => s !== reschedAppt?.slot).map((s) => (
-            <li key={s}>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={newSlot === s}
-                onClick={() => setNewSlot(s)}
-                className={cx(
-                  'flex min-h-14 w-full items-center gap-3 rounded-2xl border-2 px-4 text-left text-lg font-semibold',
-                  newSlot === s ? 'border-brand-700 bg-brand-50 text-brand-900' : 'border-line text-ink',
-                )}
-              >
-                <CalendarClock size={22} aria-hidden="true" />
-                <span className="tabular flex-1">{s}</span>
-                {newSlot === s && <Check size={24} strokeWidth={2.8} aria-hidden="true" />}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </BottomSheet>
-
       {/* Confirmations */}
+      {/* switch */}
+      <ConfirmDialog
+        open={!!confirmSwitch}
+        action="chuyển sang hồ sơ của"
+        userName={confirmSwitch?.name || ''}
+        icon={Users}
+        confirmLabel="Chuyển hồ sơ"
+        onConfirm={() => {
+          if (confirmSwitch) {
+            onSwitchPerson(confirmSwitch.id)
+            onToast(`Đang xem hồ sơ của ${confirmSwitch.name}`)
+          }
+          setConfirmSwitch(null)
+        }}
+        onClose={() => setConfirmSwitch(null)}
+      >
+        Bạn sẽ theo dõi tiến trình khám và nhận thông báo của{' '}
+        <span style={{ color: THEMES['pink'].solid, fontWeight: 'bold' }}>
+          {confirmSwitch?.name}
+        </span>.
+      </ConfirmDialog>
+
+      {/* postpone */}
       <ConfirmDialog
         open={confirm?.kind === 'postpone' && !!confirmQueue}
         action="lùi lượt 10 phút"
@@ -626,6 +778,7 @@ export default function Home({
         )}
       </ConfirmDialog>
 
+      {/* cancel current meet */}
       <ConfirmDialog
         open={confirm?.kind === 'cancelQueue' && !!confirmQueue}
         action="hủy lượt khám"
@@ -644,7 +797,8 @@ export default function Home({
           </p>
         )}
       </ConfirmDialog>
-
+      
+      {/* cancel next meet */}
       <ConfirmDialog
         open={confirm?.kind === 'cancelAppt' && !!confirmAppt}
         action="hủy lịch khám"
@@ -662,7 +816,8 @@ export default function Home({
           </p>
         )}
       </ConfirmDialog>
-
+      
+      {/* reschedule */}
       <ConfirmDialog
         open={confirm?.kind === 'resched' && !!confirmAppt}
         action="dời lịch khám"
