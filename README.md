@@ -2,6 +2,11 @@
 
 Dự án này bao gồm hệ thống ứng dụng web giúp quản lý hàng đợi, đặt lịch khám và hồ sơ bệnh nhân, chia làm 2 phân hệ chính.
 
+| Ứng dụng | Mô tả | Live Demo (Vercel) |
+| :--- | :--- | :--- |
+| **👨‍⚕️ Staff Web** | Bảng điều khiển dành cho nhân viên y tế | [Truy cập Staff Web](https://staff-web-tauorcin.vercel.app/) |
+| **📱 Patient App** | Ứng dụng lấy số và theo dõi dành cho bệnh nhân | [Truy cập Patient App](https://patient-app-orcin.vercel.app/) |
+
 ## 📂 Cấu trúc dự án
 
 Dự án được tổ chức với thư mục `apps` chứa các ứng dụng độc lập:
